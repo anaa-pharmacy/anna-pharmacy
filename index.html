@@ -2,10 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="ANAA Pharmacy"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="theme-color" content="#18a84a"/>
 <title>ANAA Pharmacy ERP</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Noto+Sans+Ethiopic:wght@400;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
@@ -376,10 +381,80 @@ body.dark-theme .branch-selector { background: var(--bg3) !important; }
 body.dark-theme #loginScreen     { background: radial-gradient(ellipse at 30% 50%, #071a0f 0%, #050d1a 60%, #04091e 100%) !important; }
 
 @media(max-width:900px){
-  .sidebar{transform:translateX(-248px);}
-  .sidebar.open{transform:translateX(0);}
+  /* ── Sidebar ── */
+  .sidebar{transform:translateX(-248px);z-index:300;}
+  .sidebar.open{transform:translateX(0);box-shadow:4px 0 24px rgba(0,0,0,.2);}
   .main{margin-left:0;}
-  .pos-layout{grid-template-columns:1fr;}
+
+  /* ── Topbar ── */
+  .topbar{padding:0 12px;gap:8px;height:52px;}
+  .page-title{font-size:14px;}
+  /* Hide less important topbar items on mobile */
+  .topbar #syncStatusEl{display:none;}
+  #clockEl{display:none;}
+
+  /* ── Content ── */
+  .content{padding:12px;}
+
+  /* ── Stats grid ── */
+  .stats-grid{grid-template-columns:repeat(2,1fr);gap:10px;}
+  .stat-value{font-size:20px;}
+
+  /* ── Tables — horizontal scroll ── */
+  .table-card{overflow-x:auto;}
+  table{min-width:600px;}
+
+  /* ── POS ── */
+  .pos-layout{
+    grid-template-columns:1fr;
+    height:auto;
+    gap:12px;
+  }
+  .pos-left{overflow:visible;}
+  .drug-grid{grid-template-columns:repeat(2,1fr);}
+  .pos-right{max-height:450px;}
+
+  /* ── Report grid ── */
+  .report-grid{grid-template-columns:1fr;}
+
+  /* ── Modals ── */
+  .modal{padding:16px;border-radius:14px;width:95%;max-height:92vh;}
+  .form-grid{grid-template-columns:1fr;}
+  .form-group[style*="grid-column"]{grid-column:1 !important;}
+
+  /* ── Tabs ── */
+  .tabs{flex-wrap:wrap;}
+  .tab{font-size:11px;padding:6px 10px;}
+
+  /* ── Buttons ── */
+  .btn{font-size:11px;padding:6px 10px;}
+  .btn-sm{font-size:10px;padding:4px 8px;}
+
+  /* ── Search box ── */
+  .search-box input{width:120px;}
+
+  /* ── Login ── */
+  .login-wrap{padding:16px;}
+  .login-card{padding:20px;}
+  .login-logo-icon{width:56px;height:56px;font-size:22px;}
+  .login-logo-name{font-size:20px;}
+}
+
+@media(max-width:480px){
+  /* ── Extra small phones ── */
+  .stats-grid{grid-template-columns:1fr 1fr;}
+  .stat-value{font-size:18px;}
+  .stat-card{padding:12px;}
+  .drug-grid{grid-template-columns:repeat(2,1fr);}
+  .topbar{padding:0 10px;}
+  .page-title{font-size:13px;}
+
+  /* Stack payment buttons vertically on tiny screens */
+  .payment-type{grid-template-columns:1fr 1fr 1fr;}
+
+  /* Smaller font in tables */
+  td{font-size:11px;padding:7px 8px;}
+  th{font-size:9px;padding:7px 8px;}
 }
 @media print{
   @page {
@@ -551,9 +626,14 @@ body.dark-theme #loginScreen     { background: radial-gradient(ellipse at 30% 50
   </div>
 </aside>
 
+<!-- Sidebar overlay for mobile -->
+<div id="sidebarOverlay" onclick="toggleSidebar()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:299;backdrop-filter:blur(2px);"></div>
+
 <!-- MAIN -->
 <main class="main" style="display:none;">
   <div class="topbar">
+    <!-- Hamburger for mobile -->
+    <button id="hamburgerBtn" onclick="toggleSidebar()" style="display:none;background:none;border:none;cursor:pointer;padding:4px;color:var(--text);font-size:22px;margin-right:4px;">☰</button>
     <div class="page-title" id="pageTitle">Dashboard</div>
     <div class="topbar-actions">
       <div style="font-size:11px;color:var(--text3);font-family:var(--mono);" id="clockEl"></div>
@@ -3454,6 +3534,45 @@ function saveSyncSettings(){
   closeModal('syncSettingsModal');
 }
 
+// ==================== MOBILE ====================
+function isMobile(){ return window.innerWidth <= 900; }
+
+function toggleSidebar(){
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  const isOpen  = sidebar.classList.contains('open');
+  sidebar.classList.toggle('open', !isOpen);
+  overlay.style.display = isOpen ? 'none' : 'block';
+}
+
+function closeSidebar(){
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  sidebar.classList.remove('open');
+  overlay.style.display = 'none';
+}
+
+function handleResize(){
+  const hamburger = document.getElementById('hamburgerBtn');
+  if(!hamburger) return;
+  if(isMobile()){
+    hamburger.style.display = 'block';
+  } else {
+    hamburger.style.display = 'none';
+    closeSidebar();
+    // Ensure sidebar is visible on desktop
+    const sidebar = document.getElementById('sidebar');
+    if(sidebar && currentUser) sidebar.style.transform = '';
+  }
+}
+
+window.addEventListener('resize', handleResize);
+
+// Close sidebar when nav item clicked on mobile
+document.querySelectorAll('.nav-item').forEach(item=>{
+  item.addEventListener('click', ()=>{ if(isMobile()) closeSidebar(); });
+});
+
 // ==================== THEME ====================
 let currentTheme = LS.get('theme') || 'light';
 
@@ -3483,6 +3602,7 @@ document.getElementById('branchName').textContent=currentBranch;
 document.getElementById('branchLabel').textContent=t('branch_label');
 populateBranchDropdowns();
 updateCreditBadge();
+handleResize(); // show hamburger on mobile
 
 // INIT — restore session if valid, otherwise show login
 LS.set('session', LS.get('session')); // keep existing session
